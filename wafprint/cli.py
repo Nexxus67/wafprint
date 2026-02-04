@@ -5,6 +5,8 @@ from .probes import build_probes, materialize
 from .runner import run_all, RunCfg
 from .features import extract
 from .scoring import score
+from .fsm import infer_fsm
+from .report import build_report
 
 def main():
     ap = argparse.ArgumentParser()
@@ -25,10 +27,14 @@ def main():
 
     cfg = RunCfg(args.timeout, args.concurrency, args.jitter_min, args.jitter_max)
     obs = asyncio.run(run_all(seqs, cfg))
-    feats = extract(obs)
-    sc = score(feats)
 
-    out = {"target": args.url, "features": feats, "verdict": sc}
+    feats = extract(obs)
+
+    fsm = infer_fsm(feats)
+
+    sc = score(feats | {"fsm": fsm})
+
+    out = build_report(args.url, feats, fsm, sc)
     print(json.dumps(out, indent=2))
 
 if __name__ == "__main__":
