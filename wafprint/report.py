@@ -6,6 +6,8 @@ def build_report(target: str, features: Dict[str, Any], fsm: Dict[str, Any], ver
         "scope": None,
         "signals": verdict.get("signals", []),
         "score": verdict.get("score"),
+        "confidence": verdict.get("confidence"),
+        "evidence_count": verdict.get("evidence_count"),
         "family": verdict.get("family"),
     }
 
