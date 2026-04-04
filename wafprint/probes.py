@@ -9,6 +9,7 @@ class Step:
     headers: Dict[str, str]
     body: Optional[bytes] = None
     repeat: int = 1
+    concurrent: bool = False
 
 @dataclass
 class Probe:
@@ -35,7 +36,7 @@ def build_probes() -> List[Probe]:
         ),
         Probe(
             name="soft_burst",
-            steps=[Step("GET", "/", {"accept": "text/html"}, repeat=10)],
+            steps=[Step("GET", "/", {"accept": "text/html"}, repeat=10, concurrent=True)],
             tags={"burst", "rate_limit"},
             stop_on="hard_block",
         ),
@@ -52,9 +53,13 @@ def build_probes() -> List[Probe]:
 
 def materialize(base_url: str, probe: Probe, base_headers: Dict[str, str]) -> List[Req]:
     out: List[Req] = []
+    burst_group = 1
     for s in probe.steps:
+        group = burst_group if s.concurrent and s.repeat > 1 else 0
         for _ in range(s.repeat):
             h = dict(base_headers)
             h.update(s.headers)
-            out.append(Req(s.method, base_url.rstrip("/") + s.path, h, s.body))
+            out.append(Req(s.method, base_url.rstrip("/") + s.path, h, s.body, group))
+        if group:
+            burst_group += 1
     return out

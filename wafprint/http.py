@@ -10,6 +10,7 @@ class Req:
     url: str
     headers: Dict[str, str]
     body: Optional[bytes] = None
+    burst_group: int = 0
 
 @dataclass
 class Obs:
